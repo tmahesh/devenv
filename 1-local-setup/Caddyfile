@@ -1,0 +1,12 @@
+{
+    debug
+}
+
+localhost {
+    respond "Hello world from caddy-proxy {http.request.host}\n"
+}
+
+*.tmahesh.com {
+    tls internal
+    reverse_proxy api
+}

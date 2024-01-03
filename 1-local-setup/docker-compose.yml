@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  #simple container to simulate a backend server
+  api:
+    image: nginxdemos/hello:plain-text 
+    ports:
+      - 8080:80
+
+  #proxy server can handle http and https requests
+  proxy:
+    image: caddy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - api

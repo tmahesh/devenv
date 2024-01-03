@@ -1,2 +1,2 @@
 # devenv
-cloud native developer environemnts on k8s
+how to setup cloud native developer environments on k8s
