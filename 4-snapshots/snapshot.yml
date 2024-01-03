@@ -1,0 +1,17 @@
+#snapshot class of policy: Retain
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: russian-doll-snapshot-class
+driver: pd.csi.storage.gke.io
+deletionPolicy: Retain
+---
+# take snapshot of a pvc
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: russian-doll-volume-snapshot
+spec:
+  volumeSnapshotClassName: russian-doll-snapshot-class
+  source:
+    persistentVolumeClaimName: russian-doll-pvc

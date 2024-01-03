@@ -1,0 +1,9 @@
+## Make the booting up faster
+To avoid  docker pulls from registry and any bootstraps activities in docker-compose files
+lets setup snapshot of a PVC and use it as source for new envs that will come up..
+
+```sh
+kubectl apply -f snapshot.yml
+```
+
+
