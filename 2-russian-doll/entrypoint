@@ -1,0 +1,18 @@
+#!/bin/bash
+set -ex
+cd /russian-doll
+
+#update config files
+#./setup.sh
+
+#start docker
+./wrapdocker.sh
+
+# docker login registry.medable.com
+docker compose pull
+docker compose up -d
+
+echo "Ctrl-C to stop"
+sleep infinity 
+# tail -f /dev/null
+echo "Exiting entrypoint..."
