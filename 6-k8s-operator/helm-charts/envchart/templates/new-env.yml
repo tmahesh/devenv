@@ -1,0 +1,63 @@
+apiVersion: v1 
+kind: Pod 
+metadata: 
+  name: {{ .Values.envName }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.envName }}
+spec: 
+  containers: 
+    - name: russian-doll 
+      image: tmahesh/russian-doll:latest
+      imagePullPolicy: Always
+      securityContext:
+        privileged: true 
+      ports:
+      - containerPort: 443
+        name: https
+        # command: ["sleep", "infinity"]
+      env:
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid 
+      volumeMounts: 
+        - name: russian-doll-vol
+          mountPath: /docker_data 
+  volumes: 
+    - name: russian-doll-vol
+      persistentVolumeClaim:
+        claimName: {{ .Values.envName }}-pvc
+---
+#pvc - for storage
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.envName }}-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  dataSource:
+    name: russian-doll-volume-snapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+
+---
+#service to expose teh pod
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.envName }}-service
+spec:
+  selector:
+    app.kubernetes.io/name: {{ .Values.envName }}
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: https
+---

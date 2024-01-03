@@ -1,0 +1,31 @@
+# permissions for end users to edit devenvironments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: devenvironment-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: 6-k8s-operator
+    app.kubernetes.io/part-of: 6-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: devenvironment-editor-role
+rules:
+- apiGroups:
+  - dev.tmahesh.com
+  resources:
+  - devenvironments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - dev.tmahesh.com
+  resources:
+  - devenvironments/status
+  verbs:
+  - get

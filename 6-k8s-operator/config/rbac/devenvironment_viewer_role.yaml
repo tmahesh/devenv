@@ -1,0 +1,27 @@
+# permissions for end users to view devenvironments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: devenvironment-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: 6-k8s-operator
+    app.kubernetes.io/part-of: 6-k8s-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: devenvironment-viewer-role
+rules:
+- apiGroups:
+  - dev.tmahesh.com
+  resources:
+  - devenvironments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - dev.tmahesh.com
+  resources:
+  - devenvironments/status
+  verbs:
+  - get

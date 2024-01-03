@@ -1,0 +1,6 @@
+# Use the 'create api' subcommand to add watches to this file.
+- group: dev.tmahesh.com
+  version: v1
+  kind: DevEnvironment
+  chart: helm-charts/envchart
+#+kubebuilder:scaffold:watch

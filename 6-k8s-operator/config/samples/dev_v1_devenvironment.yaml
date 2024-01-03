@@ -1,0 +1,9 @@
+apiVersion: dev.tmahesh.com/v1
+kind: DevEnvironment
+metadata:
+  name: devenvironment-sample
+spec:
+  # Default values copied from <project_dir>/helm-charts/envchart/values.yaml
+  envName: a1b2c3
+  
+  
