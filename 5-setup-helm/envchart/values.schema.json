@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "properties": {
+    "envName": {
+      "description": "Name of env to bootup: alpha-numeric characters only",
+      "type": "string",
+      "pattern": "^[a-z0-9]+$"
+    }
+  },
+  "required": [
+    "envName"
+  ],
+  "title": "Values",
+  "type": "object"
+}
