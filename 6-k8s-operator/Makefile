@@ -29,7 +29,8 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # tmahesh.com/6-k8s-operator-bundle:$VERSION and tmahesh.com/6-k8s-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= tmahesh.com/6-k8s-operator
+#IMAGE_TAG_BASE ?= tmahesh.com/6-k8s-operator
+IMAGE_TAG_BASE ?= tmahesh/devenv-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -51,7 +52,8 @@ endif
 OPERATOR_SDK_VERSION ?= v1.33.0
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+#IMG ?= controller:latest
+IMG ?= $(IMAGE_TAG_BASE):$(VERSION)
 
 .PHONY: all
 all: docker-build
