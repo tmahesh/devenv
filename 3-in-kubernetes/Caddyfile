@@ -1,0 +1,26 @@
+{
+    debug
+}
+
+*.tmahesh.com {
+    tls internal
+    #if u have ca signed certs; use below
+    #tls /etc/caddy/certs/tls.crt /etc/caddy/certs/tls.key
+    @hostnames header_regexp host Host ^([a-z0-9]+)-([a-z0-9]+).tmahesh.com$
+    reverse_proxy @hostnames "{re.host.2}-service.default.svc.cluster.local:443" {
+        transport http {
+            tls
+            tls_insecure_skip_verify
+        }
+    }    
+}
+
+
+# you can use dns resolver to find the name too.
+#*.tmahesh.com {
+#    reverse_proxy {
+#       header_up Host {upstream_hostport}
+#		dynamic a "{http.request.host}" {
+#		}
+#	}
+#}

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caddy-deployment
+  labels:
+    app: caddy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caddy
+  template:
+    metadata:
+      labels:
+        app: caddy
+    spec:
+      containers:
+      - name: caddy
+        image: caddy:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 443
+          name: https
+        volumeMounts: 
+        - name: caddy-config
+          mountPath: /etc/caddy/Caddyfile
+          subPath: Caddyfile
+          readOnly: true
+        # - name: certs
+        #   mountPath: /etc/caddy/certs
+        #   readOnly: true      
+      volumes: 
+        - name: caddy-config
+          configMap:
+            name: caddy-configmap          
+        # - name: certs
+        #   secret:
+        #     secretName: ssl-certs
+---
+# configmap        
+# kubectl create configmap caddy-configmap --from-file Caddyfile -o yaml --dry-run=client | kubectl apply -f -
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: caddy-service
+  annotations:
+    cloud.google.com/l4-rbs: "enabled"
+spec:
+  selector:
+    app: caddy
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: https
+  type: LoadBalancer
+---
