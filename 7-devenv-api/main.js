@@ -23,11 +23,11 @@ async function getEnvs() {
 }
 
 async function createEnv(envName) {
-    var body = JSON.parse(JSON.stringify(template));
+    var body = JSON.parse(JSON.stringify(template)); //create a copy
     body.metadata.name = `devenv-${envName}`
     body.spec.envName = envName
     const res = await k8sApi.createNamespacedCustomObject('dev.tmahesh.com','v1','default', 'devenvironments',body)
-    return {status: res.statusCode, envName, message: `open https://api-${envName}.tmahesh.com`}
+    return res.statusCode
 }
 
 async function deleteEnv(envName) {
@@ -38,7 +38,6 @@ async function deleteEnv(envName) {
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
-const fs = require('fs')
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -55,9 +54,9 @@ app.get('/devenv', async (req, res) => {
 })
 
 app.post('/devenv/:envName', async (req, res) => {
-    const envName = /^[a-z0-9]{4,}$/i.test(req.params.envName) ? 
-        req.params.envName : res.send('Invalid envName. Shud be 4+ alpha-numeric chars')
-    res.send(await createEnv(envName))
+    const envName = /^[a-z][a-z0-9]{3,}$/i.test(req.params.envName) ? 
+        req.params.envName : res.send('Invalid envName. Shud match ^[a-z][a-z0-9]{3,}$ ')
+    processCreateEnv(envName,res)
 })
 
 app.delete('/devenv/:envName', async (req, res) => {
@@ -67,10 +66,78 @@ app.delete('/devenv/:envName', async (req, res) => {
 //TODO: make this fast return an exisintg env and log request for creating new
 //Idea: use label on k8s resorces. If label used=true, then it's in use sthg like that
 app.post('/devenv/', async (req, res) => {
-    const envName = (Math.random().toString(36)+'00000000000000000').slice(2, 6+2)
-    res.send(await createEnv(envName))
+    //first cahracter should be a-z, no digits
+    const envName = 'm'+(Math.random().toString(36)+'00000000000000000').slice(2, 4+2)
+    processCreateEnv(envName,res)
 })
 
 app.listen(port, () => {
   console.log(`app listening on port ${port}`)
 })
+
+async function processCreateEnv(envName,res) {
+    statusCode = await createEnv(envName)
+    res.setHeader('Content-Type', 'application/x-ndjson');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    res.write(`{envName: "${envName}"}\n`)
+    envStatus = await watch(envName,res)
+    if(envStatus != "ready"){
+        res.write(`{status: "Error in creating ${envName}"}\n`)
+        res.end()
+        return    
+    }
+    res.write(`{envStatus: "${envStatus}"}\n`)
+    res.write(`{api:     "https://api-${envName}.tmahesh.com"}\n`)
+    res.end()
+}
+
+function prettyPrintStatus(conditions) {
+    let c = conditions.map(c => `{status: "${c.type.padEnd(20)} | ${c.status.padEnd(7)} | ${c.lastTransitionTime} | ${c.message?c.message:''}"}`)
+    return c.join('\n')
+}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const k8sWatch = new k8s.Watch(kc);
+async function watch(envName,res){
+    let watchReq
+    p1  = new Promise(async (resolve, reject) => {
+        watchReq = await k8sWatch.watch(
+            '/api/v1/namespaces/default/pods',
+            // optional query parameters can go here.
+            {
+                //allowWatchBookmarks: true,
+                labelSelector: `app.kubernetes.io/name=${envName}`,
+            },
+            // callback is called for each received object.
+            (type, apiObj, watchObj) => {
+                if (apiObj?.status?.conditions){
+                    res.write(prettyPrintStatus(apiObj.status.conditions)+'\n{status: "============="}\n')
+                }else{
+                    res.write('{status: "Processing"}\n')
+                }
+                if(apiObj?.status?.conditions?.some(c => c.type == "Ready" && c.status == "True")){
+                    resolve("ready")
+                }
+        },
+        // done callback is called if the watch terminates normally
+        (err) => {
+            if(err.code != "ECONNRESET"){
+                errString = JSON.stringify(err)
+                console.error(`Error from done callback of watch ${errString}`)
+                res.write(errString+'\n')
+                reject("watch error")
+            }
+        }
+     )
+    })
+
+    let timeOutId
+    p2 =  new Promise((resolve,reject) => timeOutId = setTimeout(resolve,3*60*1000,"timeout")); //3 minutes
+    
+    value = await Promise.race([p1, p2]).catch(err => console.error(`Promise Reject for ${envName}: ${err}`))
+
+    console.log(`Promise settled for ${envName}: ${value}`)
+    watchReq.abort()
+    clearTimeout(timeOutId)
+    return value
+}
